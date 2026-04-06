@@ -23,6 +23,7 @@ body {
   min-height: 100vh;
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
+  transition: background 260ms ease, color 260ms ease;
   background:
     url("assets/maze-bg.png") center / cover no-repeat fixed,
     radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.04), transparent 35%),
@@ -46,6 +47,7 @@ body {
   border-radius: 28px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(8px);
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
 .hero {
@@ -97,12 +99,13 @@ h1 {
   font: inherit;
   font-weight: 600;
   color: var(--ink);
-  transition: transform 160ms ease, border-color 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, color 160ms ease, background 160ms ease;
 }
 
 .stage-button.active {
   border-color: var(--accent);
   color: var(--accent-strong);
+  background: color-mix(in srgb, var(--accent) 14%, rgba(10, 10, 10, 0.9));
 }
 
 .stage-button.cleared {
@@ -184,6 +187,13 @@ canvas {
   background: #0b0b0b;
   max-height: calc(100vh - 80px);
   object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, rgba(255, 255, 255, 0.08));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 20px 40px rgba(0, 0, 0, 0.28);
+  transition: border-color 220ms ease, box-shadow 220ms ease;
 }
 
 .legend {

@@ -8,7 +8,6 @@ const newMazeButton = document.getElementById("newMazeButton");
 const mazeSizeInput = document.getElementById("mazeSize");
 const stageList = document.getElementById("stageList");
 const nextStageButton = document.getElementById("nextStageButton");
-const rootStyles = getComputedStyle(document.documentElement);
 
 const stages = [
   { size: 19, seed: 101, loopChance: 0.04 },
@@ -21,6 +20,126 @@ const stages = [
   { size: 33, seed: 878, loopChance: 0.11 },
   { size: 37, seed: 989, loopChance: 0.12 },
   { size: 41, seed: 1101, loopChance: 0.13 },
+  ...Array.from({ length: 30 }, (_, index) => ({
+    size: 43 + index * 2,
+    seed: 1212 + index * 111,
+    loopChance: Number(Math.min(0.28, 0.14 + index * 0.005).toFixed(3)),
+  })),
+];
+
+const stageThemes = [
+  {
+    name: "Sunset Ruins",
+    accent: "#ff7a59",
+    accentStrong: "#ff4d2d",
+    player: "#ffd166",
+    goal: "#fff1b8",
+    path: "#40212b",
+    wall: "#12070d",
+    bgTop: "#35131d",
+    bgBottom: "#12060b",
+    panel: "rgba(32, 10, 16, 0.86)",
+    panelBorder: "rgba(255, 146, 122, 0.18)",
+    pattern: "embers",
+  },
+  {
+    name: "Neon Circuit",
+    accent: "#5ce1e6",
+    accentStrong: "#00bcd4",
+    player: "#a7ff83",
+    goal: "#d8fff5",
+    path: "#112636",
+    wall: "#061019",
+    bgTop: "#0d2233",
+    bgBottom: "#030912",
+    panel: "rgba(6, 21, 31, 0.86)",
+    panelBorder: "rgba(92, 225, 230, 0.18)",
+    pattern: "circuit",
+  },
+  {
+    name: "Moss Temple",
+    accent: "#9ad04b",
+    accentStrong: "#6caf2f",
+    player: "#ffe28a",
+    goal: "#f4ffd4",
+    path: "#25351e",
+    wall: "#0d150a",
+    bgTop: "#1f3118",
+    bgBottom: "#091007",
+    panel: "rgba(17, 27, 12, 0.86)",
+    panelBorder: "rgba(154, 208, 75, 0.18)",
+    pattern: "moss",
+  },
+  {
+    name: "Frost Keep",
+    accent: "#9bd4ff",
+    accentStrong: "#5aa9ff",
+    player: "#ffffff",
+    goal: "#dff4ff",
+    path: "#1d3146",
+    wall: "#08111a",
+    bgTop: "#1b2d42",
+    bgBottom: "#060b12",
+    panel: "rgba(10, 20, 32, 0.86)",
+    panelBorder: "rgba(155, 212, 255, 0.18)",
+    pattern: "snow",
+  },
+  {
+    name: "Candy Vault",
+    accent: "#ff8ad8",
+    accentStrong: "#ff5fc1",
+    player: "#fff0a8",
+    goal: "#fff4ff",
+    path: "#46213b",
+    wall: "#160910",
+    bgTop: "#39172f",
+    bgBottom: "#11070e",
+    panel: "rgba(34, 11, 28, 0.86)",
+    panelBorder: "rgba(255, 138, 216, 0.18)",
+    pattern: "confetti",
+  },
+  {
+    name: "Void Station",
+    accent: "#b288ff",
+    accentStrong: "#8c5bff",
+    player: "#f6e7ff",
+    goal: "#efe3ff",
+    path: "#231b3f",
+    wall: "#090512",
+    bgTop: "#1b1433",
+    bgBottom: "#05030a",
+    panel: "rgba(18, 11, 31, 0.86)",
+    panelBorder: "rgba(178, 136, 255, 0.18)",
+    pattern: "stars",
+  },
+  {
+    name: "Volcano Core",
+    accent: "#ff9640",
+    accentStrong: "#ff5a36",
+    player: "#ffe3a1",
+    goal: "#fff4d6",
+    path: "#452116",
+    wall: "#150905",
+    bgTop: "#38160f",
+    bgBottom: "#120402",
+    panel: "rgba(36, 13, 8, 0.86)",
+    panelBorder: "rgba(255, 150, 64, 0.18)",
+    pattern: "lava",
+  },
+  {
+    name: "Deep Reef",
+    accent: "#48e0c2",
+    accentStrong: "#20bfa0",
+    player: "#ffef9f",
+    goal: "#dbfff8",
+    path: "#14353a",
+    wall: "#061114",
+    bgTop: "#13343a",
+    bgBottom: "#030b0c",
+    panel: "rgba(7, 24, 26, 0.86)",
+    panelBorder: "rgba(72, 224, 194, 0.18)",
+    pattern: "bubbles",
+  },
 ];
 
 const state = {
@@ -170,9 +289,114 @@ function setMessage(text) {
   messageElement.textContent = text;
 }
 
-function themeColor(name, fallback) {
-  const value = rootStyles.getPropertyValue(name).trim();
-  return value || fallback;
+function getStageTheme(index) {
+  const tier = Math.floor(index / 5);
+  return stageThemes[tier % stageThemes.length];
+}
+
+function applyStageTheme(index) {
+  const theme = getStageTheme(index);
+  const root = document.documentElement;
+  root.style.setProperty("--bg-top", theme.bgTop);
+  root.style.setProperty("--bg-bottom", theme.bgBottom);
+  root.style.setProperty("--panel", theme.panel);
+  root.style.setProperty("--panel-border", theme.panelBorder);
+  root.style.setProperty("--accent", theme.accent);
+  root.style.setProperty("--accent-strong", theme.accentStrong);
+  root.style.setProperty("--path", theme.path);
+  root.style.setProperty("--wall", theme.wall);
+  root.style.setProperty("--player", theme.player);
+  root.style.setProperty("--goal", theme.goal);
+}
+
+function fillPixelSquare(x, y, size, color, alpha = 1) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  ctx.fillRect(Math.round(x), Math.round(y), Math.ceil(size), Math.ceil(size));
+  ctx.globalAlpha = 1;
+}
+
+function drawStageBackdrop(theme, stage, cellSize) {
+  const pixel = Math.max(2, Math.floor(cellSize / 3));
+  const seed = stage.seed + state.stageIndex * 97;
+  const rng = mulberry32(seed);
+
+  ctx.fillStyle = theme.wall;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < canvas.height; y += pixel) {
+    for (let x = 0; x < canvas.width; x += pixel) {
+      const mix = (x + y) / (canvas.width + canvas.height);
+      const alpha = 0.06 + mix * 0.08;
+      fillPixelSquare(x, y, pixel, theme.path, alpha);
+      if (rng() > 0.965) {
+        fillPixelSquare(x, y, pixel, theme.accent, 0.22);
+      }
+    }
+  }
+
+  const decorations = Math.max(18, Math.floor(stage.size * 0.8));
+  for (let index = 0; index < decorations; index += 1) {
+    const x = Math.floor(rng() * canvas.width);
+    const y = Math.floor(rng() * canvas.height);
+    const size = pixel * (rng() > 0.78 ? 2 : 1);
+    const alpha = 0.18 + rng() * 0.22;
+
+    if (theme.pattern === "stars" || theme.pattern === "snow") {
+      fillPixelSquare(x, y, size, "#ffffff", alpha);
+    } else if (theme.pattern === "lava" || theme.pattern === "embers") {
+      fillPixelSquare(x, y, size, theme.accentStrong, alpha);
+    } else if (theme.pattern === "moss" || theme.pattern === "bubbles") {
+      fillPixelSquare(x, y, size, theme.player, alpha);
+    } else if (theme.pattern === "circuit") {
+      fillPixelSquare(x, y, size, theme.accent, alpha);
+      if (rng() > 0.5) {
+        fillPixelSquare(x + size, y, size, theme.accentStrong, alpha * 0.7);
+      }
+    } else {
+      fillPixelSquare(x, y, size, theme.goal, alpha);
+    }
+  }
+}
+
+function drawPathTexture(x, y, cellSize, theme, rng) {
+  const inset = Math.max(1, Math.floor(cellSize * 0.18));
+  const sparkle = Math.max(1, Math.floor(cellSize * 0.12));
+  if (rng() > 0.52) {
+    fillPixelSquare(x + inset, y + inset, sparkle, theme.goal, 0.08);
+  }
+  if (rng() > 0.7) {
+    fillPixelSquare(x + cellSize - inset - sparkle, y + inset, sparkle, theme.accent, 0.1);
+  }
+}
+
+function drawWallTexture(x, y, cellSize, theme, rng) {
+  const crack = Math.max(1, Math.floor(cellSize * 0.14));
+  fillPixelSquare(x, y, cellSize, theme.wall, 1);
+  if (rng() > 0.35) {
+    fillPixelSquare(x + crack, y + crack, crack, theme.accentStrong, 0.14);
+  }
+  if (rng() > 0.58) {
+    fillPixelSquare(x + cellSize - crack * 2, y + crack, crack, theme.path, 0.2);
+  }
+  if (rng() > 0.74) {
+    fillPixelSquare(x + crack, y + cellSize - crack * 2, crack, theme.goal, 0.08);
+  }
+}
+
+function drawGoalMarker(cellSize, theme) {
+  const x = state.goal.x * cellSize;
+  const y = state.goal.y * cellSize;
+  const inset = cellSize * 0.2;
+  const core = cellSize * 0.6;
+  const pixel = Math.max(2, Math.floor(cellSize * 0.14));
+
+  ctx.fillStyle = theme.goal;
+  ctx.fillRect(x + inset, y + inset, core, core);
+  fillPixelSquare(x + inset, y + inset, pixel, theme.accentStrong, 0.8);
+  fillPixelSquare(x + inset + core - pixel, y + inset, pixel, theme.accentStrong, 0.8);
+  fillPixelSquare(x + inset, y + inset + core - pixel, pixel, theme.accentStrong, 0.8);
+  fillPixelSquare(x + inset + core - pixel, y + inset + core - pixel, pixel, theme.accentStrong, 0.8);
 }
 
 function drawOtter(cellSize) {
@@ -291,33 +515,36 @@ function drawOtter(cellSize) {
 function drawMaze() {
   const size = state.maze.length;
   const cellSize = canvas.width / size;
-  const wallColor = themeColor("--wall", "#040404");
-  const pathColor = themeColor("--path", "#0f0f10");
-  const goalColor = themeColor("--goal", "#ffffff");
+  const stage = stages[state.stageIndex];
+  const theme = getStageTheme(state.stageIndex);
+  const rng = mulberry32(stage.seed * 31 + size);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  drawStageBackdrop(theme, stage, cellSize);
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
-      ctx.fillStyle = state.maze[y][x] === 1 ? wallColor : pathColor;
-      ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+      const pixelX = x * cellSize;
+      const pixelY = y * cellSize;
+      if (state.maze[y][x] === 1) {
+        drawWallTexture(pixelX, pixelY, cellSize, theme, rng);
+      } else {
+        ctx.fillStyle = theme.path;
+        ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
+        drawPathTexture(pixelX, pixelY, cellSize, theme, rng);
+      }
     }
   }
 
-  ctx.fillStyle = goalColor;
-  ctx.fillRect(
-    state.goal.x * cellSize + cellSize * 0.2,
-    state.goal.y * cellSize + cellSize * 0.2,
-    cellSize * 0.6,
-    cellSize * 0.6
-  );
-
+  drawGoalMarker(cellSize, theme);
   drawOtter(cellSize);
 }
 
 function setStage(index) {
   state.stageIndex = Math.max(0, Math.min(stages.length - 1, index));
   const stage = stages[state.stageIndex];
+  const theme = getStageTheme(state.stageIndex);
+  applyStageTheme(state.stageIndex);
   mazeSizeInput.value = String(stage.size);
   stageLabel.textContent = `${state.stageIndex + 1} / ${stages.length}`;
   stageList.querySelectorAll("button").forEach((button) => {
@@ -325,6 +552,7 @@ function setStage(index) {
     button.classList.toggle("active", buttonIndex === state.stageIndex);
     button.classList.toggle("cleared", state.cleared.has(buttonIndex));
   });
+  stageLabel.title = theme.name;
 }
 
 function resetGame() {
