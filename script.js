@@ -125,13 +125,125 @@ function themeColor(name, fallback) {
   return value || fallback;
 }
 
+function drawOtter(cellSize) {
+  const centerX = state.player.x * cellSize + cellSize / 2;
+  const centerY = state.player.y * cellSize + cellSize / 2;
+  const furDark = "#8b5636";
+  const furMid = "#b9774e";
+  const furLight = "#f3dfc1";
+  const noseColor = "#352017";
+  const whiskerColor = "#fff6eb";
+  const pawColor = "#70442b";
+  const mapColor = "#d8bb82";
+  const mapLine = "#8f6a35";
+  const leafColor = "#4d8b4f";
+
+  ctx.save();
+  ctx.translate(centerX, centerY);
+
+  ctx.fillStyle = furDark;
+  ctx.beginPath();
+  ctx.ellipse(0, cellSize * 0.03, cellSize * 0.18, cellSize * 0.24, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.ellipse(cellSize * 0.22, cellSize * 0.15, cellSize * 0.07, cellSize * 0.18, -0.35, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = furMid;
+  ctx.beginPath();
+  ctx.arc(0, -cellSize * 0.13, cellSize * 0.17, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(-cellSize * 0.11, -cellSize * 0.23, cellSize * 0.055, 0, Math.PI * 2);
+  ctx.arc(cellSize * 0.11, -cellSize * 0.23, cellSize * 0.055, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = furLight;
+  ctx.beginPath();
+  ctx.ellipse(0, cellSize * 0.09, cellSize * 0.1, cellSize * 0.15, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.beginPath();
+  ctx.ellipse(0, -cellSize * 0.09, cellSize * 0.12, cellSize * 0.09, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = "#121212";
+  ctx.beginPath();
+  ctx.arc(-cellSize * 0.055, -cellSize * 0.15, cellSize * 0.02, 0, Math.PI * 2);
+  ctx.arc(cellSize * 0.055, -cellSize * 0.15, cellSize * 0.02, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = noseColor;
+  ctx.beginPath();
+  ctx.ellipse(0, -cellSize * 0.09, cellSize * 0.03, cellSize * 0.022, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.strokeStyle = whiskerColor;
+  ctx.lineWidth = Math.max(1, cellSize * 0.012);
+  ctx.lineCap = "round";
+  ctx.beginPath();
+  ctx.moveTo(-cellSize * 0.03, -cellSize * 0.085);
+  ctx.lineTo(-cellSize * 0.13, -cellSize * 0.11);
+  ctx.moveTo(-cellSize * 0.03, -cellSize * 0.065);
+  ctx.lineTo(-cellSize * 0.13, -cellSize * 0.05);
+  ctx.moveTo(cellSize * 0.03, -cellSize * 0.085);
+  ctx.lineTo(cellSize * 0.13, -cellSize * 0.11);
+  ctx.moveTo(cellSize * 0.03, -cellSize * 0.065);
+  ctx.lineTo(cellSize * 0.13, -cellSize * 0.05);
+  ctx.stroke();
+
+  ctx.strokeStyle = noseColor;
+  ctx.lineWidth = Math.max(1.2, cellSize * 0.012);
+  ctx.beginPath();
+  ctx.moveTo(-cellSize * 0.035, -cellSize * 0.045);
+  ctx.quadraticCurveTo(0, -cellSize * 0.02, cellSize * 0.035, -cellSize * 0.045);
+  ctx.stroke();
+
+  ctx.fillStyle = leafColor;
+  ctx.beginPath();
+  ctx.ellipse(-cellSize * 0.16, -cellSize * 0.06, cellSize * 0.05, cellSize * 0.025, -0.7, 0, Math.PI * 2);
+  ctx.ellipse(-cellSize * 0.11, -cellSize * 0.015, cellSize * 0.045, cellSize * 0.022, 0.25, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = mapColor;
+  ctx.fillRect(-cellSize * 0.09, -cellSize * 0.005, cellSize * 0.18, cellSize * 0.16);
+  ctx.strokeStyle = mapLine;
+  ctx.lineWidth = Math.max(1, cellSize * 0.01);
+  ctx.strokeRect(-cellSize * 0.09, -cellSize * 0.005, cellSize * 0.18, cellSize * 0.16);
+  ctx.beginPath();
+  ctx.moveTo(-cellSize * 0.06, cellSize * 0.03);
+  ctx.lineTo(-cellSize * 0.02, cellSize * 0.03);
+  ctx.lineTo(-cellSize * 0.02, cellSize * 0.065);
+  ctx.lineTo(cellSize * 0.025, cellSize * 0.065);
+  ctx.lineTo(cellSize * 0.025, cellSize * 0.02);
+  ctx.lineTo(cellSize * 0.06, cellSize * 0.02);
+  ctx.moveTo(-cellSize * 0.055, cellSize * 0.085);
+  ctx.lineTo(-cellSize * 0.015, cellSize * 0.085);
+  ctx.lineTo(-cellSize * 0.015, cellSize * 0.12);
+  ctx.lineTo(cellSize * 0.03, cellSize * 0.12);
+  ctx.lineTo(cellSize * 0.03, cellSize * 0.085);
+  ctx.lineTo(cellSize * 0.06, cellSize * 0.085);
+  ctx.stroke();
+
+  ctx.fillStyle = pawColor;
+  ctx.beginPath();
+  ctx.ellipse(-cellSize * 0.115, cellSize * 0.05, cellSize * 0.04, cellSize * 0.06, 0.25, 0, Math.PI * 2);
+  ctx.ellipse(cellSize * 0.115, cellSize * 0.05, cellSize * 0.04, cellSize * 0.06, -0.25, 0, Math.PI * 2);
+  ctx.ellipse(-cellSize * 0.06, cellSize * 0.275, cellSize * 0.045, cellSize * 0.028, -0.2, 0, Math.PI * 2);
+  ctx.ellipse(cellSize * 0.06, cellSize * 0.275, cellSize * 0.045, cellSize * 0.028, 0.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function drawMaze() {
   const size = state.maze.length;
   const cellSize = canvas.width / size;
   const wallColor = themeColor("--wall", "#040404");
   const pathColor = themeColor("--path", "#0f0f10");
   const goalColor = themeColor("--goal", "#ffffff");
-  const playerColor = themeColor("--player", "#ff5959");
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -150,16 +262,7 @@ function drawMaze() {
     cellSize * 0.6
   );
 
-  ctx.fillStyle = playerColor;
-  ctx.beginPath();
-  ctx.arc(
-    state.player.x * cellSize + cellSize / 2,
-    state.player.y * cellSize + cellSize / 2,
-    cellSize * 0.3,
-    0,
-    Math.PI * 2
-  );
-  ctx.fill();
+  drawOtter(cellSize);
 }
 
 function setStage(index) {
