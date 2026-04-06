@@ -9,18 +9,21 @@ const newMazeButton = document.getElementById("newMazeButton");
 const mazeSizeInput = document.getElementById("mazeSize");
 const stageList = document.getElementById("stageList");
 const nextStageButton = document.getElementById("nextStageButton");
+const clearPopup = document.getElementById("clearPopup");
+const clearPopupOtter = document.getElementById("clearPopupOtter");
+const clearPopupText = document.getElementById("clearPopupText");
 
 const stages = [
   { size: 19, seed: 101, loopChance: 0.04 },
   { size: 21, seed: 212, loopChance: 0.05 },
   { size: 23, seed: 323, loopChance: 0.06 },
-  { size: 25, seed: 434, loopChance: 0.07 },
-  { size: 27, seed: 545, loopChance: 0.08 },
-  { size: 29, seed: 656, loopChance: 0.09 },
-  { size: 31, seed: 767, loopChance: 0.1 },
-  { size: 33, seed: 878, loopChance: 0.11 },
-  { size: 37, seed: 989, loopChance: 0.12 },
-  { size: 41, seed: 1101, loopChance: 0.13 },
+  { size: 25, seed: 434, loopChance: 0.065 },
+  { size: 25, seed: 545, loopChance: 0.07 },
+  { size: 27, seed: 656, loopChance: 0.075 },
+  { size: 27, seed: 767, loopChance: 0.08 },
+  { size: 29, seed: 878, loopChance: 0.09 },
+  { size: 31, seed: 989, loopChance: 0.1 },
+  { size: 33, seed: 1101, loopChance: 0.11 },
   ...Array.from({ length: 30 }, (_, index) => ({
     size: 43 + index * 2,
     seed: 1212 + index * 111,
@@ -154,6 +157,17 @@ const moves = {
   a: [-1, 0],
 };
 
+const clearPopupVariants = [
+  { mood: "happy", text: "좋았어! 수달이 길을 찾았어!" },
+  { mood: "wink", text: "클리어 완료! 첨벙첨벙 다음 스테이지로!" },
+  { mood: "blink", text: "해냈다! 수달 발바닥이 반짝반짝!" },
+  { mood: "proud", text: "멋져! 이번 미로도 완전 정복!" },
+  { mood: "sparkle", text: "야호! 수달이 엄청 신났어!" },
+  { mood: "happy", text: "굿! 길치 수달 졸업이야!" },
+  { mood: "wink", text: "짠! 출구 찾기 대성공!" },
+  { mood: "proud", text: "오예! 오늘 제일 귀여운 클리어!" },
+];
+
 const state = {
   maze: [],
   player: { x: 1, y: 1 },
@@ -165,9 +179,11 @@ const state = {
   stageIndex: 0,
   cleared: new Set(),
   activeMoveKey: null,
-  moveStartTimeoutId: null,
-  moveIntervalId: null,
+  moveFrameId: null,
+  moveDelayUntil: 0,
+  lastMoveAt: 0,
   clearFlashUntil: 0,
+  clearPopupTimeoutId: null,
 };
 
 function createGrid(size) {
@@ -310,6 +326,30 @@ function setClearState(isCleared) {
   body.classList.toggle("is-cleared", isCleared);
 }
 
+function hideClearPopup() {
+  clearTimeout(state.clearPopupTimeoutId);
+  state.clearPopupTimeoutId = null;
+  clearPopup.classList.remove("show");
+  clearPopup.hidden = true;
+}
+
+function showClearPopup() {
+  const theme = getStageTheme(state.stageIndex);
+  const rng = mulberry32(stages[state.stageIndex].seed + state.stageIndex * 1009 + state.moveCount);
+  const variant = clearPopupVariants[Math.floor(rng() * clearPopupVariants.length)];
+  clearPopupOtter.dataset.mood = variant.mood;
+  clearPopupText.textContent = `${variant.text} ${state.stageIndex + 1}스테이지 클리어!`;
+  clearPopup.style.borderColor = `color-mix(in srgb, ${theme.accent} 35%, rgba(255, 255, 255, 0.22))`;
+  clearPopup.hidden = false;
+  clearPopup.classList.remove("show");
+  void clearPopup.offsetWidth;
+  clearPopup.classList.add("show");
+  clearTimeout(state.clearPopupTimeoutId);
+  state.clearPopupTimeoutId = setTimeout(() => {
+    hideClearPopup();
+  }, 3000);
+}
+
 function getStageTheme(index) {
   const tier = Math.floor(index / 5);
   return stageThemes[tier % stageThemes.length];
@@ -423,6 +463,7 @@ function drawGoalMarker(cellSize, theme) {
 }
 
 function drawOtter(cellSize) {
+  const otterSize = cellSize < 20 ? cellSize * 1.22 : cellSize * 1.1;
   const centerX = state.player.x * cellSize + cellSize / 2;
   const centerY = state.player.y * cellSize + cellSize / 2;
   const furDark = "#8b5636";
@@ -440,96 +481,96 @@ function drawOtter(cellSize) {
 
   ctx.fillStyle = furDark;
   ctx.beginPath();
-  ctx.ellipse(0, cellSize * 0.03, cellSize * 0.18, cellSize * 0.24, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, otterSize * 0.03, otterSize * 0.18, otterSize * 0.24, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.ellipse(cellSize * 0.22, cellSize * 0.15, cellSize * 0.07, cellSize * 0.18, -0.35, 0, Math.PI * 2);
+  ctx.ellipse(otterSize * 0.22, otterSize * 0.15, otterSize * 0.07, otterSize * 0.18, -0.35, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = furMid;
   ctx.beginPath();
-  ctx.arc(0, -cellSize * 0.13, cellSize * 0.17, 0, Math.PI * 2);
+  ctx.arc(0, -otterSize * 0.13, otterSize * 0.17, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.arc(-cellSize * 0.11, -cellSize * 0.23, cellSize * 0.055, 0, Math.PI * 2);
-  ctx.arc(cellSize * 0.11, -cellSize * 0.23, cellSize * 0.055, 0, Math.PI * 2);
+  ctx.arc(-otterSize * 0.11, -otterSize * 0.23, otterSize * 0.055, 0, Math.PI * 2);
+  ctx.arc(otterSize * 0.11, -otterSize * 0.23, otterSize * 0.055, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = furLight;
   ctx.beginPath();
-  ctx.ellipse(0, cellSize * 0.09, cellSize * 0.1, cellSize * 0.15, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, otterSize * 0.09, otterSize * 0.1, otterSize * 0.15, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.beginPath();
-  ctx.ellipse(0, -cellSize * 0.09, cellSize * 0.12, cellSize * 0.09, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -otterSize * 0.09, otterSize * 0.12, otterSize * 0.09, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = "#121212";
   ctx.beginPath();
-  ctx.arc(-cellSize * 0.055, -cellSize * 0.15, cellSize * 0.02, 0, Math.PI * 2);
-  ctx.arc(cellSize * 0.055, -cellSize * 0.15, cellSize * 0.02, 0, Math.PI * 2);
+  ctx.arc(-otterSize * 0.055, -otterSize * 0.15, otterSize * 0.02, 0, Math.PI * 2);
+  ctx.arc(otterSize * 0.055, -otterSize * 0.15, otterSize * 0.02, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = noseColor;
   ctx.beginPath();
-  ctx.ellipse(0, -cellSize * 0.09, cellSize * 0.03, cellSize * 0.022, 0, 0, Math.PI * 2);
+  ctx.ellipse(0, -otterSize * 0.09, otterSize * 0.03, otterSize * 0.022, 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.strokeStyle = whiskerColor;
-  ctx.lineWidth = Math.max(1, cellSize * 0.012);
+  ctx.lineWidth = Math.max(1, otterSize * 0.012);
   ctx.lineCap = "round";
   ctx.beginPath();
-  ctx.moveTo(-cellSize * 0.03, -cellSize * 0.085);
-  ctx.lineTo(-cellSize * 0.13, -cellSize * 0.11);
-  ctx.moveTo(-cellSize * 0.03, -cellSize * 0.065);
-  ctx.lineTo(-cellSize * 0.13, -cellSize * 0.05);
-  ctx.moveTo(cellSize * 0.03, -cellSize * 0.085);
-  ctx.lineTo(cellSize * 0.13, -cellSize * 0.11);
-  ctx.moveTo(cellSize * 0.03, -cellSize * 0.065);
-  ctx.lineTo(cellSize * 0.13, -cellSize * 0.05);
+  ctx.moveTo(-otterSize * 0.03, -otterSize * 0.085);
+  ctx.lineTo(-otterSize * 0.13, -otterSize * 0.11);
+  ctx.moveTo(-otterSize * 0.03, -otterSize * 0.065);
+  ctx.lineTo(-otterSize * 0.13, -otterSize * 0.05);
+  ctx.moveTo(otterSize * 0.03, -otterSize * 0.085);
+  ctx.lineTo(otterSize * 0.13, -otterSize * 0.11);
+  ctx.moveTo(otterSize * 0.03, -otterSize * 0.065);
+  ctx.lineTo(otterSize * 0.13, -otterSize * 0.05);
   ctx.stroke();
 
   ctx.strokeStyle = noseColor;
-  ctx.lineWidth = Math.max(1.2, cellSize * 0.012);
+  ctx.lineWidth = Math.max(1.2, otterSize * 0.012);
   ctx.beginPath();
-  ctx.moveTo(-cellSize * 0.035, -cellSize * 0.045);
-  ctx.quadraticCurveTo(0, -cellSize * 0.02, cellSize * 0.035, -cellSize * 0.045);
+  ctx.moveTo(-otterSize * 0.035, -otterSize * 0.045);
+  ctx.quadraticCurveTo(0, -otterSize * 0.02, otterSize * 0.035, -otterSize * 0.045);
   ctx.stroke();
 
   ctx.fillStyle = leafColor;
   ctx.beginPath();
-  ctx.ellipse(-cellSize * 0.16, -cellSize * 0.06, cellSize * 0.05, cellSize * 0.025, -0.7, 0, Math.PI * 2);
-  ctx.ellipse(-cellSize * 0.11, -cellSize * 0.015, cellSize * 0.045, cellSize * 0.022, 0.25, 0, Math.PI * 2);
+  ctx.ellipse(-otterSize * 0.16, -otterSize * 0.06, otterSize * 0.05, otterSize * 0.025, -0.7, 0, Math.PI * 2);
+  ctx.ellipse(-otterSize * 0.11, -otterSize * 0.015, otterSize * 0.045, otterSize * 0.022, 0.25, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.fillStyle = mapColor;
-  ctx.fillRect(-cellSize * 0.09, -cellSize * 0.005, cellSize * 0.18, cellSize * 0.16);
+  ctx.fillRect(-otterSize * 0.09, -otterSize * 0.005, otterSize * 0.18, otterSize * 0.16);
   ctx.strokeStyle = mapLine;
-  ctx.lineWidth = Math.max(1, cellSize * 0.01);
-  ctx.strokeRect(-cellSize * 0.09, -cellSize * 0.005, cellSize * 0.18, cellSize * 0.16);
+  ctx.lineWidth = Math.max(1, otterSize * 0.01);
+  ctx.strokeRect(-otterSize * 0.09, -otterSize * 0.005, otterSize * 0.18, otterSize * 0.16);
   ctx.beginPath();
-  ctx.moveTo(-cellSize * 0.06, cellSize * 0.03);
-  ctx.lineTo(-cellSize * 0.02, cellSize * 0.03);
-  ctx.lineTo(-cellSize * 0.02, cellSize * 0.065);
-  ctx.lineTo(cellSize * 0.025, cellSize * 0.065);
-  ctx.lineTo(cellSize * 0.025, cellSize * 0.02);
-  ctx.lineTo(cellSize * 0.06, cellSize * 0.02);
-  ctx.moveTo(-cellSize * 0.055, cellSize * 0.085);
-  ctx.lineTo(-cellSize * 0.015, cellSize * 0.085);
-  ctx.lineTo(-cellSize * 0.015, cellSize * 0.12);
-  ctx.lineTo(cellSize * 0.03, cellSize * 0.12);
-  ctx.lineTo(cellSize * 0.03, cellSize * 0.085);
-  ctx.lineTo(cellSize * 0.06, cellSize * 0.085);
+  ctx.moveTo(-otterSize * 0.06, otterSize * 0.03);
+  ctx.lineTo(-otterSize * 0.02, otterSize * 0.03);
+  ctx.lineTo(-otterSize * 0.02, otterSize * 0.065);
+  ctx.lineTo(otterSize * 0.025, otterSize * 0.065);
+  ctx.lineTo(otterSize * 0.025, otterSize * 0.02);
+  ctx.lineTo(otterSize * 0.06, otterSize * 0.02);
+  ctx.moveTo(-otterSize * 0.055, otterSize * 0.085);
+  ctx.lineTo(-otterSize * 0.015, otterSize * 0.085);
+  ctx.lineTo(-otterSize * 0.015, otterSize * 0.12);
+  ctx.lineTo(otterSize * 0.03, otterSize * 0.12);
+  ctx.lineTo(otterSize * 0.03, otterSize * 0.085);
+  ctx.lineTo(otterSize * 0.06, otterSize * 0.085);
   ctx.stroke();
 
   ctx.fillStyle = pawColor;
   ctx.beginPath();
-  ctx.ellipse(-cellSize * 0.115, cellSize * 0.05, cellSize * 0.04, cellSize * 0.06, 0.25, 0, Math.PI * 2);
-  ctx.ellipse(cellSize * 0.115, cellSize * 0.05, cellSize * 0.04, cellSize * 0.06, -0.25, 0, Math.PI * 2);
-  ctx.ellipse(-cellSize * 0.06, cellSize * 0.275, cellSize * 0.045, cellSize * 0.028, -0.2, 0, Math.PI * 2);
-  ctx.ellipse(cellSize * 0.06, cellSize * 0.275, cellSize * 0.045, cellSize * 0.028, 0.2, 0, Math.PI * 2);
+  ctx.ellipse(-otterSize * 0.115, otterSize * 0.05, otterSize * 0.04, otterSize * 0.06, 0.25, 0, Math.PI * 2);
+  ctx.ellipse(otterSize * 0.115, otterSize * 0.05, otterSize * 0.04, otterSize * 0.06, -0.25, 0, Math.PI * 2);
+  ctx.ellipse(-otterSize * 0.06, otterSize * 0.275, otterSize * 0.045, otterSize * 0.028, -0.2, 0, Math.PI * 2);
+  ctx.ellipse(otterSize * 0.06, otterSize * 0.275, otterSize * 0.045, otterSize * 0.028, 0.2, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -600,11 +641,11 @@ function getBlockedMessage() {
 }
 
 function getMoveInterval() {
-  return 42;
+  return 30;
 }
 
 function getMoveDelay() {
-  return 90;
+  return 55;
 }
 
 function setStage(index) {
@@ -623,16 +664,17 @@ function setStage(index) {
 }
 
 function stopContinuousMove() {
-  clearTimeout(state.moveStartTimeoutId);
-  clearInterval(state.moveIntervalId);
-  state.moveStartTimeoutId = null;
-  state.moveIntervalId = null;
+  cancelAnimationFrame(state.moveFrameId);
+  state.moveFrameId = null;
   state.activeMoveKey = null;
+  state.moveDelayUntil = 0;
+  state.lastMoveAt = 0;
 }
 
 function resetGame() {
   stopContinuousMove();
   setClearState(false);
+  hideClearPopup();
 
   const stage = stages[state.stageIndex];
   const rng = mulberry32(stage.seed);
@@ -677,6 +719,7 @@ function tryMove(dx, dy) {
     stopContinuousMove();
     setClearState(true);
     triggerClearFlash();
+    showClearPopup();
     state.cleared.add(state.stageIndex);
     setStage(state.stageIndex);
     setMessage(getClearMessage());
@@ -697,20 +740,28 @@ function startContinuousMove(key) {
   stopContinuousMove();
   state.activeMoveKey = key;
   tryMove(nextMove[0], nextMove[1]);
+  state.moveDelayUntil = performance.now() + getMoveDelay();
+  state.lastMoveAt = state.moveDelayUntil;
 
-  state.moveStartTimeoutId = setTimeout(() => {
-    state.moveIntervalId = setInterval(() => {
-      if (state.activeMoveKey !== key || state.finished) {
+  const tick = (now) => {
+    if (state.activeMoveKey !== key || state.finished) {
+      stopContinuousMove();
+      return;
+    }
+
+    if (now >= state.moveDelayUntil && now - state.lastMoveAt >= getMoveInterval()) {
+      const moved = tryMove(nextMove[0], nextMove[1]);
+      state.lastMoveAt = now;
+      if (!moved) {
         stopContinuousMove();
         return;
       }
+    }
 
-      const moved = tryMove(nextMove[0], nextMove[1]);
-      if (!moved) {
-        stopContinuousMove();
-      }
-    }, getMoveInterval());
-  }, getMoveDelay());
+    state.moveFrameId = requestAnimationFrame(tick);
+  };
+
+  state.moveFrameId = requestAnimationFrame(tick);
 }
 
 document.addEventListener("keydown", (event) => {

@@ -43,6 +43,16 @@
     </section>
 
     <section class="board-panel">
+      <div id="clearPopup" class="clear-popup" aria-live="polite" hidden>
+        <div
+          class="clear-popup-otter"
+          id="clearPopupOtter"
+          data-mood="happy"
+          aria-hidden="true"
+          style="background-image: url('assets/tilvanian-face.jpg');"
+        ></div>
+        <p class="clear-popup-text" id="clearPopupText">Great!</p>
+      </div>
       <canvas id="mazeCanvas" width="800" height="800" aria-label="미로 게임 보드"></canvas>
       <div class="legend">
         <span><i class="player"></i>플레이어</span>
