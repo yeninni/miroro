@@ -8,6 +8,7 @@ const newMazeButton = document.getElementById("newMazeButton");
 const mazeSizeInput = document.getElementById("mazeSize");
 const stageList = document.getElementById("stageList");
 const nextStageButton = document.getElementById("nextStageButton");
+const rootStyles = getComputedStyle(document.documentElement);
 
 const stages = [
   { size: 9, seed: 101 },
@@ -119,20 +120,29 @@ function setMessage(text) {
   messageElement.textContent = text;
 }
 
+function themeColor(name, fallback) {
+  const value = rootStyles.getPropertyValue(name).trim();
+  return value || fallback;
+}
+
 function drawMaze() {
   const size = state.maze.length;
   const cellSize = canvas.width / size;
+  const wallColor = themeColor("--wall", "#040404");
+  const pathColor = themeColor("--path", "#0f0f10");
+  const goalColor = themeColor("--goal", "#ffffff");
+  const playerColor = themeColor("--player", "#ff5959");
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
   for (let y = 0; y < size; y += 1) {
     for (let x = 0; x < size; x += 1) {
-      ctx.fillStyle = state.maze[y][x] === 1 ? "#324128" : "#f6f0df";
+      ctx.fillStyle = state.maze[y][x] === 1 ? wallColor : pathColor;
       ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
     }
   }
 
-  ctx.fillStyle = "#f0a202";
+  ctx.fillStyle = goalColor;
   ctx.fillRect(
     state.goal.x * cellSize + cellSize * 0.2,
     state.goal.y * cellSize + cellSize * 0.2,
@@ -140,7 +150,7 @@ function drawMaze() {
     cellSize * 0.6
   );
 
-  ctx.fillStyle = "#2f7f72";
+  ctx.fillStyle = playerColor;
   ctx.beginPath();
   ctx.arc(
     state.player.x * cellSize + cellSize / 2,

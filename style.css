@@ -1,17 +1,17 @@
 :root {
-  --bg-top: #f4efe3;
-  --bg-bottom: #dbe7c8;
-  --panel: rgba(255, 252, 245, 0.82);
-  --panel-border: rgba(65, 77, 48, 0.12);
-  --ink: #253018;
-  --muted: #627051;
-  --accent: #d85f38;
-  --accent-strong: #af4220;
-  --path: #f6f0df;
-  --wall: #324128;
-  --player: #2f7f72;
-  --goal: #f0a202;
-  --shadow: 0 22px 50px rgba(40, 52, 28, 0.16);
+  --bg-top: #0a0a0a;
+  --bg-bottom: #050505;
+  --panel: rgba(14, 14, 14, 0.88);
+  --panel-border: rgba(255, 255, 255, 0.05);
+  --ink: #f1f1f1;
+  --muted: #a0a0a0;
+  --accent: #ff5959;
+  --accent-strong: #ff2e2e;
+  --path: #0f0f10;
+  --wall: #040404;
+  --player: #ff5959;
+  --goal: #ffffff;
+  --shadow: 0 22px 50px rgba(0, 0, 0, 0.35);
 }
 
 * {
@@ -24,7 +24,8 @@ body {
   font-family: "Space Grotesk", sans-serif;
   color: var(--ink);
   background:
-    radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 30%),
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.06), transparent 35%),
+    radial-gradient(circle at 80% 30%, rgba(255, 89, 89, 0.08), transparent 40%),
     linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
 }
 
@@ -86,8 +87,8 @@ h1 {
 }
 
 .stage-button {
-  border: 1px solid rgba(65, 77, 48, 0.12);
-  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 10, 0.85);
   border-radius: 14px;
   padding: 10px;
   cursor: pointer;
@@ -103,8 +104,8 @@ h1 {
 }
 
 .stage-button.cleared {
-  border-color: rgba(47, 127, 114, 0.5);
-  color: var(--player);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
 }
 
 .stage-button:hover {
@@ -114,8 +115,8 @@ h1 {
 .card {
   padding: 16px;
   border-radius: 20px;
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(65, 77, 48, 0.08);
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .label {
@@ -154,7 +155,7 @@ button {
   background: linear-gradient(135deg, var(--accent), var(--accent-strong));
   cursor: pointer;
   transition: transform 160ms ease, box-shadow 160ms ease;
-  box-shadow: 0 12px 24px rgba(175, 66, 32, 0.22);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.35);
 }
 
 button:hover {
@@ -164,8 +165,9 @@ button:hover {
 .next-stage {
   width: 100%;
   margin-top: 14px;
-  background: linear-gradient(135deg, #2f7f72, #245b53);
-  box-shadow: 0 16px 30px rgba(47, 127, 114, 0.22);
+  background: linear-gradient(135deg, #ffffff, #d9d9d9);
+  color: #111111;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.35);
 }
 
 .board-panel {
@@ -177,7 +179,7 @@ canvas {
   height: auto;
   display: block;
   border-radius: 24px;
-  background: #f8f4ea;
+  background: #0b0b0b;
 }
 
 .legend {
@@ -211,7 +213,7 @@ canvas {
 
 .legend .path {
   background: var(--path);
-  border: 1px solid rgba(50, 65, 40, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 900px) {
