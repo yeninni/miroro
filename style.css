@@ -1,0 +1,249 @@
+:root {
+  --bg-top: #f4efe3;
+  --bg-bottom: #dbe7c8;
+  --panel: rgba(255, 252, 245, 0.82);
+  --panel-border: rgba(65, 77, 48, 0.12);
+  --ink: #253018;
+  --muted: #627051;
+  --accent: #d85f38;
+  --accent-strong: #af4220;
+  --path: #f6f0df;
+  --wall: #324128;
+  --player: #2f7f72;
+  --goal: #f0a202;
+  --shadow: 0 22px 50px rgba(40, 52, 28, 0.16);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Space Grotesk", sans-serif;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, rgba(255, 255, 255, 0.7), transparent 30%),
+    linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+}
+
+.app {
+  width: min(1100px, calc(100vw - 32px));
+  margin: 0 auto;
+  padding: 36px 0 48px;
+  display: grid;
+  gap: 24px;
+  grid-template-columns: 1.05fr 1fr;
+  align-items: start;
+}
+
+.hero,
+.board-panel {
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+  border-radius: 28px;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(8px);
+}
+
+.hero {
+  padding: 32px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  letter-spacing: 0.24em;
+  font-size: 0.82rem;
+  color: var(--accent-strong);
+}
+
+h1 {
+  margin: 0;
+  font-family: "Do Hyeon", sans-serif;
+  font-size: clamp(2.4rem, 5vw, 4.6rem);
+  line-height: 0.98;
+}
+
+.description,
+.message {
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 28px 0;
+}
+
+.stage-list {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.stage-button {
+  border: 1px solid rgba(65, 77, 48, 0.12);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 14px;
+  padding: 10px;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.stage-button.active {
+  border-color: var(--accent);
+  color: var(--accent-strong);
+}
+
+.stage-button.cleared {
+  border-color: rgba(47, 127, 114, 0.5);
+  color: var(--player);
+}
+
+.stage-button:hover {
+  transform: translateY(-1px);
+}
+
+.card {
+  padding: 16px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.66);
+  border: 1px solid rgba(65, 77, 48, 0.08);
+}
+
+.label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+
+.card strong {
+  font-size: clamp(1.4rem, 2vw, 2rem);
+}
+
+.controls {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+}
+
+.size-picker {
+  font-weight: 700;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+button {
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  font: inherit;
+  font-weight: 700;
+  color: white;
+  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  cursor: pointer;
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  box-shadow: 0 12px 24px rgba(175, 66, 32, 0.22);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+.next-stage {
+  width: 100%;
+  margin-top: 14px;
+  background: linear-gradient(135deg, #2f7f72, #245b53);
+  box-shadow: 0 16px 30px rgba(47, 127, 114, 0.22);
+}
+
+.board-panel {
+  padding: 20px;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 24px;
+  background: #f8f4ea;
+}
+
+.legend {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+  color: var(--muted);
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend i {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.legend .player {
+  background: var(--player);
+}
+
+.legend .goal {
+  background: var(--goal);
+}
+
+.legend .path {
+  background: var(--path);
+  border: 1px solid rgba(50, 65, 40, 0.16);
+}
+
+@media (max-width: 900px) {
+  .app {
+    grid-template-columns: 1fr;
+    padding-top: 20px;
+  }
+}
+
+@media (max-width: 640px) {
+  .app {
+    width: min(100vw - 18px, 1100px);
+  }
+
+  .hero,
+  .board-panel {
+    border-radius: 22px;
+  }
+
+  .hero {
+    padding: 22px;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .controls {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
