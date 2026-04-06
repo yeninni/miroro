@@ -11,16 +11,16 @@ const nextStageButton = document.getElementById("nextStageButton");
 const rootStyles = getComputedStyle(document.documentElement);
 
 const stages = [
-  { size: 9, seed: 101 },
-  { size: 11, seed: 212 },
-  { size: 11, seed: 323 },
-  { size: 13, seed: 434 },
-  { size: 13, seed: 545 },
-  { size: 15, seed: 656 },
-  { size: 15, seed: 767 },
-  { size: 17, seed: 878 },
-  { size: 19, seed: 989 },
-  { size: 21, seed: 1101 },
+  { size: 19, seed: 101, loopChance: 0.04 },
+  { size: 21, seed: 212, loopChance: 0.05 },
+  { size: 23, seed: 323, loopChance: 0.06 },
+  { size: 25, seed: 434, loopChance: 0.07 },
+  { size: 27, seed: 545, loopChance: 0.08 },
+  { size: 29, seed: 656, loopChance: 0.09 },
+  { size: 31, seed: 767, loopChance: 0.1 },
+  { size: 33, seed: 878, loopChance: 0.11 },
+  { size: 37, seed: 989, loopChance: 0.12 },
+  { size: 41, seed: 1101, loopChance: 0.13 },
 ];
 
 const state = {
@@ -99,9 +99,59 @@ function buildMaze(size, rng) {
   }
 
   maze[1][1] = 0;
-  maze[size - 2][size - 2] = 0;
 
   return maze;
+}
+
+function addMazeLoops(maze, rng, loopChance) {
+  const size = maze.length;
+
+  for (let y = 1; y < size - 1; y += 1) {
+    for (let x = 1; x < size - 1; x += 1) {
+      if (maze[y][x] !== 1 || rng() > loopChance) {
+        continue;
+      }
+
+      const hasHorizontalPassage = maze[y][x - 1] === 0 && maze[y][x + 1] === 0;
+      const hasVerticalPassage = maze[y - 1][x] === 0 && maze[y + 1][x] === 0;
+
+      if (hasHorizontalPassage !== hasVerticalPassage) {
+        maze[y][x] = 0;
+      }
+    }
+  }
+}
+
+function findFarthestCell(maze, start) {
+  const queue = [start];
+  const visited = new Set([`${start.x},${start.y}`]);
+  let currentIndex = 0;
+  let farthest = start;
+
+  while (currentIndex < queue.length) {
+    const current = queue[currentIndex];
+    currentIndex += 1;
+    farthest = current;
+
+    const neighbors = [
+      { x: current.x, y: current.y - 1 },
+      { x: current.x + 1, y: current.y },
+      { x: current.x, y: current.y + 1 },
+      { x: current.x - 1, y: current.y },
+    ];
+
+    neighbors.forEach((neighbor) => {
+      const key = `${neighbor.x},${neighbor.y}`;
+      if (maze[neighbor.y]?.[neighbor.x] !== 0 || visited.has(key)) {
+        return;
+      }
+
+      visited.add(key);
+      queue.push(neighbor);
+    });
+  }
+
+  return farthest;
 }
 
 function startTimer() {
@@ -281,8 +331,9 @@ function resetGame() {
   const stage = stages[state.stageIndex];
   const rng = mulberry32(stage.seed);
   state.maze = buildMaze(stage.size, rng);
+  addMazeLoops(state.maze, rng, stage.loopChance);
   state.player = { x: 1, y: 1 };
-  state.goal = { x: stage.size - 2, y: stage.size - 2 };
+  state.goal = findFarthestCell(state.maze, state.player);
   state.moveCount = 0;
   state.finished = false;
 
