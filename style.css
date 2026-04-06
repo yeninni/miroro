@@ -47,7 +47,7 @@ body {
   border-radius: 28px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(8px);
-  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease, transform 140ms ease;
 }
 
 .hero {
@@ -74,6 +74,11 @@ h1 {
 .message {
   color: var(--muted);
   line-height: 1.6;
+}
+
+.message {
+  min-height: 3.2em;
+  font-weight: 500;
 }
 
 .stats {
@@ -122,6 +127,11 @@ h1 {
   border-radius: 20px;
   background: rgba(10, 10, 10, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: transform 160ms ease, background-color 180ms ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
 }
 
 .label {
@@ -167,6 +177,12 @@ button:hover {
   transform: translateY(-1px);
 }
 
+button:focus-visible,
+.stage-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 42%, white);
+  outline-offset: 2px;
+}
+
 .next-stage {
   width: 100%;
   margin-top: 14px;
@@ -176,7 +192,17 @@ button:hover {
 }
 
 .board-panel {
+  position: relative;
   padding: 16px;
+}
+
+.board-panel::before {
+  content: "";
+  position: absolute;
+  inset: 16px;
+  border-radius: 20px;
+  background: radial-gradient(circle at top, rgba(255, 255, 255, 0.12), transparent 50%);
+  pointer-events: none;
 }
 
 canvas {
@@ -228,6 +254,15 @@ canvas {
 .legend .path {
   background: var(--path);
   border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+body.is-cleared .board-panel {
+  box-shadow: 0 22px 50px rgba(255, 255, 255, 0.16);
+  transform: translateY(-2px);
+}
+
+body.is-cleared .hero {
+  box-shadow: 0 22px 50px rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 900px) {

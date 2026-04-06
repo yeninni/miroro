@@ -1,5 +1,6 @@
 const canvas = document.getElementById("mazeCanvas");
 const ctx = canvas.getContext("2d");
+const body = document.body;
 const moveCountElement = document.getElementById("moveCount");
 const timerElement = document.getElementById("timer");
 const stageLabel = document.getElementById("stageLabel");
@@ -142,6 +143,17 @@ const stageThemes = [
   },
 ];
 
+const moves = {
+  arrowup: [0, -1],
+  w: [0, -1],
+  arrowright: [1, 0],
+  d: [1, 0],
+  arrowdown: [0, 1],
+  s: [0, 1],
+  arrowleft: [-1, 0],
+  a: [-1, 0],
+};
+
 const state = {
   maze: [],
   player: { x: 1, y: 1 },
@@ -152,6 +164,10 @@ const state = {
   finished: false,
   stageIndex: 0,
   cleared: new Set(),
+  activeMoveKey: null,
+  moveStartTimeoutId: null,
+  moveIntervalId: null,
+  clearFlashUntil: 0,
 };
 
 function createGrid(size) {
@@ -175,6 +191,10 @@ function shuffle(items, rng) {
     [items[index], items[swapIndex]] = [items[swapIndex], items[index]];
   }
   return items;
+}
+
+function createNoiseRng(seed, x, y) {
+  return mulberry32(seed + x * 374761393 + y * 668265263);
 }
 
 function buildMaze(size, rng) {
@@ -218,13 +238,11 @@ function buildMaze(size, rng) {
   }
 
   maze[1][1] = 0;
-
   return maze;
 }
 
 function addMazeLoops(maze, rng, loopChance) {
   const size = maze.length;
-
   for (let y = 1; y < size - 1; y += 1) {
     for (let x = 1; x < size - 1; x += 1) {
       if (maze[y][x] !== 1 || rng() > loopChance) {
@@ -233,7 +251,6 @@ function addMazeLoops(maze, rng, loopChance) {
 
       const hasHorizontalPassage = maze[y][x - 1] === 0 && maze[y][x + 1] === 0;
       const hasVerticalPassage = maze[y - 1][x] === 0 && maze[y + 1][x] === 0;
-
       if (hasHorizontalPassage !== hasVerticalPassage) {
         maze[y][x] = 0;
       }
@@ -287,6 +304,10 @@ function startTimer() {
 
 function setMessage(text) {
   messageElement.textContent = text;
+}
+
+function setClearState(isCleared) {
+  body.classList.toggle("is-cleared", isCleared);
 }
 
 function getStageTheme(index) {
@@ -359,9 +380,10 @@ function drawStageBackdrop(theme, stage, cellSize) {
   }
 }
 
-function drawPathTexture(x, y, cellSize, theme, rng) {
+function drawPathTexture(x, y, cellSize, theme, stageSeed) {
   const inset = Math.max(1, Math.floor(cellSize * 0.18));
   const sparkle = Math.max(1, Math.floor(cellSize * 0.12));
+  const rng = createNoiseRng(stageSeed, x, y);
   if (rng() > 0.52) {
     fillPixelSquare(x + inset, y + inset, sparkle, theme.goal, 0.08);
   }
@@ -370,8 +392,9 @@ function drawPathTexture(x, y, cellSize, theme, rng) {
   }
 }
 
-function drawWallTexture(x, y, cellSize, theme, rng) {
+function drawWallTexture(x, y, cellSize, theme, stageSeed) {
   const crack = Math.max(1, Math.floor(cellSize * 0.14));
+  const rng = createNoiseRng(stageSeed * 7, x, y);
   fillPixelSquare(x, y, cellSize, theme.wall, 1);
   if (rng() > 0.35) {
     fillPixelSquare(x + crack, y + crack, crack, theme.accentStrong, 0.14);
@@ -517,7 +540,6 @@ function drawMaze() {
   const cellSize = canvas.width / size;
   const stage = stages[state.stageIndex];
   const theme = getStageTheme(state.stageIndex);
-  const rng = mulberry32(stage.seed * 31 + size);
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawStageBackdrop(theme, stage, cellSize);
@@ -527,17 +549,62 @@ function drawMaze() {
       const pixelX = x * cellSize;
       const pixelY = y * cellSize;
       if (state.maze[y][x] === 1) {
-        drawWallTexture(pixelX, pixelY, cellSize, theme, rng);
+        drawWallTexture(pixelX, pixelY, cellSize, theme, stage.seed);
       } else {
         ctx.fillStyle = theme.path;
         ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
-        drawPathTexture(pixelX, pixelY, cellSize, theme, rng);
+        drawPathTexture(pixelX, pixelY, cellSize, theme, stage.seed);
       }
     }
   }
 
   drawGoalMarker(cellSize, theme);
+
+  if (state.clearFlashUntil > Date.now()) {
+    ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }
+
   drawOtter(cellSize);
+}
+
+function triggerClearFlash() {
+  state.clearFlashUntil = Date.now() + 420;
+  const animate = () => {
+    drawMaze();
+    if (Date.now() < state.clearFlashUntil) {
+      requestAnimationFrame(animate);
+    }
+  };
+  requestAnimationFrame(animate);
+}
+
+function getIntroMessage() {
+  return "출발 지점은 왼쪽 위, 출구는 가장 먼 곳에 열려 있어요.";
+}
+
+function getMoveMessage() {
+  return "길이 이어져 있어요. 수달을 출구까지 안내해 보세요.";
+}
+
+function getClearMessage() {
+  return `클리어! ${state.moveCount}번 움직여서 도착했어요.`;
+}
+
+function getStageButtonMessage(index) {
+  return `${index + 1} 스테이지로 이동했어요. 새 테마의 미로를 확인해 보세요.`;
+}
+
+function getBlockedMessage() {
+  return "수달이 벽에 막혔어요. 다른 길로 돌아가 보세요.";
+}
+
+function getMoveInterval() {
+  return 42;
+}
+
+function getMoveDelay() {
+  return 90;
 }
 
 function setStage(index) {
@@ -547,15 +614,26 @@ function setStage(index) {
   applyStageTheme(state.stageIndex);
   mazeSizeInput.value = String(stage.size);
   stageLabel.textContent = `${state.stageIndex + 1} / ${stages.length}`;
+  stageLabel.title = theme.name;
   stageList.querySelectorAll("button").forEach((button) => {
     const buttonIndex = Number(button.dataset.stage);
     button.classList.toggle("active", buttonIndex === state.stageIndex);
     button.classList.toggle("cleared", state.cleared.has(buttonIndex));
   });
-  stageLabel.title = theme.name;
+}
+
+function stopContinuousMove() {
+  clearTimeout(state.moveStartTimeoutId);
+  clearInterval(state.moveIntervalId);
+  state.moveStartTimeoutId = null;
+  state.moveIntervalId = null;
+  state.activeMoveKey = null;
 }
 
 function resetGame() {
+  stopContinuousMove();
+  setClearState(false);
+
   const stage = stages[state.stageIndex];
   const rng = mulberry32(stage.seed);
   state.maze = buildMaze(stage.size, rng);
@@ -564,9 +642,10 @@ function resetGame() {
   state.goal = findFarthestCell(state.maze, state.player);
   state.moveCount = 0;
   state.finished = false;
+  state.clearFlashUntil = 0;
 
   moveCountElement.textContent = "0";
-  setMessage("출발 지점은 왼쪽 위, 출구는 오른쪽 아래예요.");
+  setMessage(getIntroMessage());
   nextStageButton.hidden = true;
   startTimer();
   drawMaze();
@@ -574,65 +653,103 @@ function resetGame() {
 
 function tryMove(dx, dy) {
   if (state.finished) {
-    return;
+    stopContinuousMove();
+    return false;
   }
 
   const nextX = state.player.x + dx;
   const nextY = state.player.y + dy;
 
   if (state.maze[nextY]?.[nextX] !== 0) {
-    return;
+    setMessage(getBlockedMessage());
+    return false;
   }
 
   state.player = { x: nextX, y: nextY };
   state.moveCount += 1;
   moveCountElement.textContent = String(state.moveCount);
+  setMessage(getMoveMessage());
   drawMaze();
 
   if (nextX === state.goal.x && nextY === state.goal.y) {
     state.finished = true;
     clearInterval(state.timerId);
+    stopContinuousMove();
+    setClearState(true);
+    triggerClearFlash();
     state.cleared.add(state.stageIndex);
     setStage(state.stageIndex);
-    setMessage(`클리어! ${state.moveCount}번 움직여서 도착했어요.`);
+    setMessage(getClearMessage());
     if (state.stageIndex < stages.length - 1) {
       nextStageButton.hidden = false;
     }
   }
+
+  return true;
 }
 
-document.addEventListener("keydown", (event) => {
-  const key = event.key.toLowerCase();
-  const moves = {
-    arrowup: [0, -1],
-    w: [0, -1],
-    arrowright: [1, 0],
-    d: [1, 0],
-    arrowdown: [0, 1],
-    s: [0, 1],
-    arrowleft: [-1, 0],
-    a: [-1, 0],
-  };
-
+function startContinuousMove(key) {
   const nextMove = moves[key];
   if (!nextMove) {
     return;
   }
 
-  event.preventDefault();
+  stopContinuousMove();
+  state.activeMoveKey = key;
   tryMove(nextMove[0], nextMove[1]);
+
+  state.moveStartTimeoutId = setTimeout(() => {
+    state.moveIntervalId = setInterval(() => {
+      if (state.activeMoveKey !== key || state.finished) {
+        stopContinuousMove();
+        return;
+      }
+
+      const moved = tryMove(nextMove[0], nextMove[1]);
+      if (!moved) {
+        stopContinuousMove();
+      }
+    }, getMoveInterval());
+  }, getMoveDelay());
+}
+
+document.addEventListener("keydown", (event) => {
+  const key = event.key.toLowerCase();
+  if (!moves[key]) {
+    return;
+  }
+
+  event.preventDefault();
+  if (state.activeMoveKey === key) {
+    return;
+  }
+
+  startContinuousMove(key);
 });
+
+document.addEventListener("keyup", (event) => {
+  const key = event.key.toLowerCase();
+  if (state.activeMoveKey === key) {
+    stopContinuousMove();
+  }
+});
+
+window.addEventListener("blur", stopContinuousMove);
 
 mazeSizeInput.addEventListener("input", () => {
   mazeSizeInput.value = String(stages[state.stageIndex].size);
 });
 
-newMazeButton.addEventListener("click", resetGame);
+newMazeButton.addEventListener("click", () => {
+  resetGame();
+  setMessage("현재 스테이지를 다시 시작했어요.");
+});
 
 nextStageButton.addEventListener("click", () => {
   if (state.stageIndex < stages.length - 1) {
     setStage(state.stageIndex + 1);
     resetGame();
+    setMessage(getStageButtonMessage(state.stageIndex));
   }
 });
 
@@ -645,6 +762,7 @@ stages.forEach((stage, index) => {
   button.addEventListener("click", () => {
     setStage(index);
     resetGame();
+    setMessage(getStageButtonMessage(index));
   });
   stageList.appendChild(button);
 });

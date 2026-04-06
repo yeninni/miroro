@@ -13,10 +13,10 @@
   <main class="app">
     <section class="hero">
       <p class="eyebrow">MIRORO</p>
-      <h1>작게 시작하는 미로 게임</h1>
+      <h1>작게 시작해 끝없이 커지는 미로 게임</h1>
       <p class="description">
-        화살표 키나 WASD로 움직여서 출구까지 도착해보세요.
-        새 미로를 만들고, 기록을 확인하면서 조금씩 확장해갈 수 있어요.
+        방향키나 WASD를 길게 눌러 수달을 움직이고 출구까지 도착해 보세요.
+        스테이지가 올라갈수록 미로 크기와 테마가 바뀌면서 점점 더 어려워집니다.
       </p>
       <div class="stats">
         <article class="card">
@@ -24,7 +24,7 @@
           <strong id="moveCount">0</strong>
         </article>
         <article class="card">
-          <span class="label">경과 시간</span>
+          <span class="label">플레이 시간</span>
           <strong id="timer">00:00</strong>
         </article>
         <article class="card">
@@ -39,7 +39,7 @@
         <button id="newMazeButton" type="button">현재 스테이지 다시</button>
       </div>
       <button id="nextStageButton" class="next-stage" type="button" hidden>다음 스테이지</button>
-      <p id="message" class="message">출발 지점은 왼쪽 위, 출구는 오른쪽 아래예요.</p>
+      <p id="message" class="message">출발 지점은 왼쪽 위, 출구는 가장 먼 곳에 열려 있어요.</p>
     </section>
 
     <section class="board-panel">
