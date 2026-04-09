@@ -13,23 +13,53 @@ const clearPopup = document.getElementById("clearPopup");
 const clearPopupOtter = document.getElementById("clearPopupOtter");
 const clearPopupText = document.getElementById("clearPopupText");
 
-const stages = [
-  { size: 19, seed: 101, loopChance: 0.04 },
-  { size: 21, seed: 212, loopChance: 0.05 },
-  { size: 23, seed: 323, loopChance: 0.06 },
-  { size: 25, seed: 434, loopChance: 0.065 },
-  { size: 25, seed: 545, loopChance: 0.07 },
-  { size: 27, seed: 656, loopChance: 0.075 },
-  { size: 27, seed: 767, loopChance: 0.08 },
-  { size: 29, seed: 878, loopChance: 0.09 },
-  { size: 31, seed: 989, loopChance: 0.1 },
-  { size: 33, seed: 1101, loopChance: 0.11 },
-  ...Array.from({ length: 30 }, (_, index) => ({
-    size: 43 + index * 2,
-    seed: 1212 + index * 111,
-    loopChance: Number(Math.min(0.28, 0.14 + index * 0.005).toFixed(3)),
-  })),
+const stageBlueprints = [
+  { size: 17, loopChance: 0.004 },
+  { size: 19, loopChance: 0.006 },
+  { size: 19, loopChance: 0.008 },
+  { size: 21, loopChance: 0.01 },
+  { size: 21, loopChance: 0.012 },
+  { size: 23, loopChance: 0.014 },
+  { size: 23, loopChance: 0.016 },
+  { size: 25, loopChance: 0.018 },
+  { size: 25, loopChance: 0.02 },
+  { size: 27, loopChance: 0.022 },
+  { size: 29, loopChance: 0.025 },
+  { size: 29, loopChance: 0.027 },
+  { size: 31, loopChance: 0.03 },
+  { size: 31, loopChance: 0.032 },
+  { size: 33, loopChance: 0.035 },
+  { size: 33, loopChance: 0.037 },
+  { size: 35, loopChance: 0.04 },
+  { size: 35, loopChance: 0.042 },
+  { size: 37, loopChance: 0.045 },
+  { size: 37, loopChance: 0.047 },
+  { size: 39, loopChance: 0.05 },
+  { size: 39, loopChance: 0.052 },
+  { size: 41, loopChance: 0.055 },
+  { size: 41, loopChance: 0.057 },
+  { size: 43, loopChance: 0.06 },
+  { size: 43, loopChance: 0.062 },
+  { size: 45, loopChance: 0.065 },
+  { size: 45, loopChance: 0.067 },
+  { size: 47, loopChance: 0.07 },
+  { size: 47, loopChance: 0.072 },
+  { size: 47, loopChance: 0.074 },
+  { size: 49, loopChance: 0.076 },
+  { size: 49, loopChance: 0.078 },
+  { size: 51, loopChance: 0.08 },
+  { size: 51, loopChance: 0.082 },
+  { size: 53, loopChance: 0.085 },
+  { size: 53, loopChance: 0.087 },
+  { size: 55, loopChance: 0.09 },
+  { size: 55, loopChance: 0.092 },
+  { size: 55, loopChance: 0.095 },
 ];
+
+const stages = stageBlueprints.map((stage, index) => ({
+  ...stage,
+  seed: 101 + index * 111,
+}));
 
 const stageThemes = [
   {
@@ -338,7 +368,7 @@ function showClearPopup() {
   const rng = mulberry32(stages[state.stageIndex].seed + state.stageIndex * 1009 + state.moveCount);
   const variant = clearPopupVariants[Math.floor(rng() * clearPopupVariants.length)];
   clearPopupOtter.dataset.mood = variant.mood;
-  clearPopupText.textContent = `${variant.text} ${state.stageIndex + 1}스테이지 클리어!`;
+  clearPopupText.textContent = `잘했다! ${variant.text} ${state.stageIndex + 1}스테이지 클리어!`;
   clearPopup.style.borderColor = `color-mix(in srgb, ${theme.accent} 35%, rgba(255, 255, 255, 0.22))`;
   clearPopup.hidden = false;
   clearPopup.classList.remove("show");
