@@ -213,6 +213,12 @@ const state = {
   moveDelayUntil: 0,
   lastMoveAt: 0,
   clearFlashUntil: 0,
+  previousPlayer: null,
+  movePulseUntil: 0,
+  blockedCell: null,
+  blockedPulseUntil: 0,
+  effectFrameId: null,
+  effectFrameUntil: 0,
   clearPopupTimeoutId: null,
 };
 
@@ -453,7 +459,12 @@ function drawStageBackdrop(theme, stage, cellSize) {
 function drawPathTexture(x, y, cellSize, theme, stageSeed) {
   const inset = Math.max(1, Math.floor(cellSize * 0.18));
   const sparkle = Math.max(1, Math.floor(cellSize * 0.12));
+  const edge = Math.max(1, Math.floor(cellSize * 0.05));
   const rng = createNoiseRng(stageSeed, x, y);
+  fillPixelSquare(x, y, cellSize, theme.path, 1);
+  fillPixelSquare(x, y, cellSize, "#ffffff", 0.025);
+  fillPixelSquare(x, y, cellSize, "#000000", 0.05);
+  fillPixelSquare(x + edge, y + edge, cellSize - edge * 2, theme.path, 0.82);
   if (rng() > 0.52) {
     fillPixelSquare(x + inset, y + inset, sparkle, theme.goal, 0.08);
   }
@@ -464,8 +475,15 @@ function drawPathTexture(x, y, cellSize, theme, stageSeed) {
 
 function drawWallTexture(x, y, cellSize, theme, stageSeed) {
   const crack = Math.max(1, Math.floor(cellSize * 0.14));
+  const bevel = Math.max(1, Math.floor(cellSize * 0.08));
   const rng = createNoiseRng(stageSeed * 7, x, y);
   fillPixelSquare(x, y, cellSize, theme.wall, 1);
+  fillPixelSquare(x, y, cellSize, theme.accentStrong, 0.025);
+  fillPixelSquare(x, y, cellSize, "#ffffff", 0.035);
+  fillPixelSquare(x, y + cellSize - bevel, cellSize, bevel, "#000000", 0.18);
+  fillPixelSquare(x + cellSize - bevel, y, bevel, cellSize, "#000000", 0.14);
+  fillPixelSquare(x, y, cellSize, bevel, theme.goal, 0.035);
+  fillPixelSquare(x, y, bevel, cellSize, theme.goal, 0.025);
   if (rng() > 0.35) {
     fillPixelSquare(x + crack, y + crack, crack, theme.accentStrong, 0.14);
   }
@@ -477,19 +495,102 @@ function drawWallTexture(x, y, cellSize, theme, stageSeed) {
   }
 }
 
+function drawCellGlow(centerX, centerY, radius, color, alpha) {
+  const glow = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+  glow.addColorStop(0, color);
+  glow.addColorStop(1, "rgba(0, 0, 0, 0)");
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.globalCompositeOperation = "screen";
+  ctx.fillStyle = glow;
+  ctx.fillRect(centerX - radius, centerY - radius, radius * 2, radius * 2);
+  ctx.restore();
+}
+
 function drawGoalMarker(cellSize, theme) {
   const x = state.goal.x * cellSize;
   const y = state.goal.y * cellSize;
   const inset = cellSize * 0.2;
   const core = cellSize * 0.6;
   const pixel = Math.max(2, Math.floor(cellSize * 0.14));
+  const centerX = x + cellSize / 2;
+  const centerY = y + cellSize / 2;
+
+  drawCellGlow(centerX, centerY, cellSize * 2.2, theme.accent, 0.28);
+
+  ctx.save();
+  ctx.shadowColor = theme.accent;
+  ctx.shadowBlur = Math.max(10, cellSize * 0.7);
 
   ctx.fillStyle = theme.goal;
   ctx.fillRect(x + inset, y + inset, core, core);
+  ctx.restore();
+
   fillPixelSquare(x + inset, y + inset, pixel, theme.accentStrong, 0.8);
   fillPixelSquare(x + inset + core - pixel, y + inset, pixel, theme.accentStrong, 0.8);
   fillPixelSquare(x + inset, y + inset + core - pixel, pixel, theme.accentStrong, 0.8);
   fillPixelSquare(x + inset + core - pixel, y + inset + core - pixel, pixel, theme.accentStrong, 0.8);
+  fillPixelSquare(x + inset + pixel, y + inset + pixel, core - pixel * 2, core - pixel * 2, "#ffffff", 0.16);
+}
+
+function drawMoveTrail(cellSize, theme) {
+  if (!state.previousPlayer || state.movePulseUntil <= Date.now()) {
+    return;
+  }
+
+  const progress = 1 - (state.movePulseUntil - Date.now()) / 180;
+  const alpha = Math.max(0, 0.34 - progress * 0.34);
+  const x = state.previousPlayer.x * cellSize;
+  const y = state.previousPlayer.y * cellSize;
+  const inset = cellSize * (0.24 + progress * 0.18);
+  const size = cellSize - inset * 2;
+
+  drawCellGlow(x + cellSize / 2, y + cellSize / 2, cellSize * 1.4, theme.player, alpha * 0.9);
+  fillPixelSquare(x + inset, y + inset, size, theme.player, alpha);
+}
+
+function drawBlockedPulse(cellSize, theme) {
+  if (!state.blockedCell || state.blockedPulseUntil <= Date.now()) {
+    return;
+  }
+
+  const progress = 1 - (state.blockedPulseUntil - Date.now()) / 180;
+  const alpha = Math.max(0, 0.42 - progress * 0.42);
+  const x = state.blockedCell.x * cellSize;
+  const y = state.blockedCell.y * cellSize;
+  const border = Math.max(2, Math.floor(cellSize * 0.12));
+
+  fillPixelSquare(x, y, cellSize, theme.accentStrong, alpha * 0.4);
+  fillPixelSquare(x, y, cellSize, border, theme.accentStrong, alpha);
+  fillPixelSquare(x, y + cellSize - border, cellSize, border, theme.accentStrong, alpha);
+  fillPixelSquare(x, y, border, cellSize, theme.accentStrong, alpha);
+  fillPixelSquare(x + cellSize - border, y, border, cellSize, theme.accentStrong, alpha);
+}
+
+function drawBoardLighting(cellSize, theme) {
+  const playerX = state.player.x * cellSize + cellSize / 2;
+  const playerY = state.player.y * cellSize + cellSize / 2;
+  const radius = Math.max(canvas.width, canvas.height) * 0.42;
+  const vignette = ctx.createRadialGradient(
+    playerX,
+    playerY,
+    cellSize * 1.2,
+    playerX,
+    playerY,
+    radius
+  );
+
+  drawCellGlow(playerX, playerY, cellSize * 2.4, theme.player, 0.18);
+
+  vignette.addColorStop(0, "rgba(0, 0, 0, 0)");
+  vignette.addColorStop(0.58, "rgba(0, 0, 0, 0.08)");
+  vignette.addColorStop(1, "rgba(0, 0, 0, 0.42)");
+
+  ctx.save();
+  ctx.fillStyle = vignette;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.restore();
 }
 
 function drawOtter(cellSize) {
@@ -508,6 +609,11 @@ function drawOtter(cellSize) {
 
   ctx.save();
   ctx.translate(centerX, centerY);
+
+  ctx.fillStyle = "rgba(0, 0, 0, 0.26)";
+  ctx.beginPath();
+  ctx.ellipse(0, otterSize * 0.31, otterSize * 0.22, otterSize * 0.07, 0, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.fillStyle = furDark;
   ctx.beginPath();
@@ -622,14 +728,15 @@ function drawMaze() {
       if (state.maze[y][x] === 1) {
         drawWallTexture(pixelX, pixelY, cellSize, theme, stage.seed);
       } else {
-        ctx.fillStyle = theme.path;
-        ctx.fillRect(pixelX, pixelY, cellSize, cellSize);
         drawPathTexture(pixelX, pixelY, cellSize, theme, stage.seed);
       }
     }
   }
 
+  drawMoveTrail(cellSize, theme);
+  drawBlockedPulse(cellSize, theme);
   drawGoalMarker(cellSize, theme);
+  drawBoardLighting(cellSize, theme);
 
   if (state.clearFlashUntil > Date.now()) {
     ctx.fillStyle = "rgba(255, 255, 255, 0.18)";
@@ -648,6 +755,25 @@ function triggerClearFlash() {
     }
   };
   requestAnimationFrame(animate);
+}
+
+function requestEffectFrames(duration = 180) {
+  state.effectFrameUntil = Math.max(state.effectFrameUntil, Date.now() + duration);
+  if (state.effectFrameId) {
+    return;
+  }
+
+  const animate = () => {
+    drawMaze();
+    if (Date.now() < state.effectFrameUntil) {
+      state.effectFrameId = requestAnimationFrame(animate);
+      return;
+    }
+
+    state.effectFrameId = null;
+  };
+
+  state.effectFrameId = requestAnimationFrame(animate);
 }
 
 function getIntroMessage() {
@@ -715,6 +841,13 @@ function resetGame() {
   state.moveCount = 0;
   state.finished = false;
   state.clearFlashUntil = 0;
+  state.previousPlayer = null;
+  state.movePulseUntil = 0;
+  state.blockedCell = null;
+  state.blockedPulseUntil = 0;
+  state.effectFrameUntil = 0;
+  cancelAnimationFrame(state.effectFrameId);
+  state.effectFrameId = null;
 
   moveCountElement.textContent = "0";
   setMessage(getIntroMessage());
@@ -733,15 +866,24 @@ function tryMove(dx, dy) {
   const nextY = state.player.y + dy;
 
   if (state.maze[nextY]?.[nextX] !== 0) {
+    state.blockedCell = { x: nextX, y: nextY };
+    state.blockedPulseUntil = Date.now() + 180;
     setMessage(getBlockedMessage());
+    drawMaze();
+    requestEffectFrames();
     return false;
   }
 
+  state.previousPlayer = { ...state.player };
+  state.movePulseUntil = Date.now() + 180;
+  state.blockedCell = null;
+  state.blockedPulseUntil = 0;
   state.player = { x: nextX, y: nextY };
   state.moveCount += 1;
   moveCountElement.textContent = String(state.moveCount);
   setMessage(getMoveMessage());
   drawMaze();
+  requestEffectFrames();
 
   if (nextX === state.goal.x && nextY === state.goal.y) {
     state.finished = true;
